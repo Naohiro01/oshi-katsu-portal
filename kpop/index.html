@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【K-POP】推し活ガチ勢・課金度チェッカー</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #161b26;
+            --text-main: #f0f6fc;
+            --text-sub: #8b949e;
+            --accent-pink: #ff2a85;
+            --accent-cyan: #00f0ff;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            overflow-x: hidden;
+        }
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background-color: var(--card-bg);
+            border: 1px solid #30363d;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        h1 {
+            font-size: 1.25rem;
+            text-align: center;
+            margin-bottom: 24px;
+            background: linear-gradient(45deg, var(--accent-pink), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .question-box {
+            margin-bottom: 20px;
+        }
+        .progress {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+            text-align: right;
+            font-weight: bold;
+        }
+        .question-title {
+            font-size: 1rem;
+            margin-bottom: 16px;
+            line-height: 1.5;
+            font-weight: bold;
+        }
+        .btn-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .choice-btn {
+            background-color: #21262d;
+            color: var(--text-main);
+            border: 1px solid #30363d;
+            padding: 14px 16px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .choice-btn:hover {
+            border-color: var(--accent-pink);
+            background-color: #30363d;
+        }
+
+        /* --- 洞窟から外へ抜けるホワイトアウト演出画面 --- */
+        #gacha-animation-screen {
+            display: none;
+            height: 350px;
+            position: relative;
+            background: radial-gradient(circle, #161b26 0%, #04060b 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #30363d;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .cave-light-source {
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 50px 30px #fff, 0 0 100px 60px var(--accent-cyan), 0 0 150px 90px var(--accent-pink);
+            animation: caveExpand 1.1s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+        }
+
+        @keyframes caveExpand {
+            0% { transform: scale(0.1); opacity: 0.2; }
+            50% { transform: scale(3); opacity: 0.8; }
+            100% { transform: scale(25); opacity: 1; background: #ffffff; }
+        }
+
+        /* --- ガチャカード風の結果画面 & 演出 --- */
+        #result-screen {
+            display: none;
+            text-align: center;
+        }
+
+        .gacha-card {
+            border-radius: 12px;
+            overflow: hidden;
+            padding: 5px;
+            margin-bottom: 16px;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+            transform: scale(0.6);
+            opacity: 0;
+            animation: cardZoomIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes cardZoomIn {
+            0% { transform: scale(0.6) translateY(40px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .gacha-card.sss {
+            background: linear-gradient(135deg, #ff007f, #7f00ff, #00f0ff, #ffdf00, #ff007f);
+            background-size: 400% 400%;
+            animation: rainbowBorder 3s linear infinite, cardZoomIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            box-shadow: 0 0 30px rgba(255, 0, 127, 0.8), inset 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+        @keyframes rainbowBorder {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .gacha-card.sss::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(0deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+            transform: rotate(30deg);
+            animation: shineEffect 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes shineEffect {
+            0% { transform: translateY(-100%) rotate(30deg); }
+            100% { transform: translateY(100%) rotate(30deg); }
+        }
+
+        .gacha-card.sr { background: linear-gradient(135deg, #ff2a85, #ff758c, #ff7eb3); box-shadow: 0 0 20px rgba(255, 42, 133, 0.4); }
+        .gacha-card.r { background: linear-gradient(135deg, #00f0ff, #0077ff); box-shadow: 0 0 15px rgba(0, 240, 255, 0.3); }
+        .gacha-card.n { background: #30363d; }
+
+        .card-inner {
+            background-color: #161b26;
+            border-radius: 9px;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+
+        .rarity-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border-radius: 4px;
+            color: #fff;
+            z-index: 3;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+        .sss .rarity-badge { background: linear-gradient(135deg, #ff007f, #7f00ff); }
+        .sr .rarity-badge { background: linear-gradient(135deg, #ff2a85, #ff758c); }
+        .r .rarity-badge { background: linear-gradient(135deg, #00f0ff, #0077ff); color: #000; }
+        .n .rarity-badge { background: #484f58; }
+
+        .card-inner img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .rank-title {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .sss-text { color: #ff007f; text-shadow: 0 0 10px rgba(255, 0, 127, 0.4); }
+        .sr-text { color: #ff758c; }
+        .r-text { color: #00f0ff; }
+        .n-text { color: #8b949e; }
+
+        .rank-desc {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            margin-bottom: 20px;
+            line-height: 1.6;
+            text-align: left;
+            background: #21262d;
+            padding: 14px;
+            border-radius: 8px;
+        }
+
+        /* アクションボタン群 */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .share-btn {
+            background-color: #000;
+            color: #fff;
+            border: 1px solid #333;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+        }
+        .share-btn:hover { background-color: #222; }
+
+        .sub-btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        .sub-btn {
+            flex: 1;
+            background-color: #21262d;
+            color: var(--text-main);
+            border: 1px solid #30363d;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            text-decoration: none;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+        .sub-btn:hover {
+            background-color: #30363d;
+            border-color: #8b949e;
+        }
+
+        /* SVGアイコン */
+        .svg-icon {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>【K-POP】推し活ガチ勢・課金度チェッカー</h1>
+
+        <!-- 質問画面 -->
+        <div id="quiz-screen">
+            <div id="progress" class="progress">Q1 / 4</div>
+            <div class="question-box">
+                <div id="question-text" class="question-title">読み込み中...</div>
+                <div id="choices-container" class="btn-list"></div>
+            </div>
+        </div>
+
+        <!-- 洞窟から外へ抜けるホワイトアウト演出画面 -->
+        <div id="gacha-animation-screen">
+            <div class="cave-light-source"></div>
+        </div>
+
+        <!-- 結果画面 -->
+        <div id="result-screen">
+            <div id="gacha-card-frame" class="gacha-card">
+                <div class="card-inner">
+                    <div id="rarity-badge" class="rarity-badge">SSS</div>
+                    <img src="" alt="診断結果画像" id="result-image">
+                </div>
+            </div>
+
+            <div class="rank-title" id="rank-title">称号読み込み中...</div>
+            <div class="rank-desc" id="rank-desc">
+                ここに診断結果の詳細テキストが入ります。
+            </div>
+
+            <!-- アクション導線 -->
+            <div class="action-buttons">
+                <button class="share-btn" onclick="shareToX()">
+                    𝕏 で結果をシェアする
+                </button>
+                <div class="sub-btn-group">
+                    <button class="sub-btn" onclick="retryQuiz()">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+                        もう一度診断
+                    </button>
+                    <a href="../index.html" class="sub-btn">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                        トップに戻る
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                text: "Q1. 推しのカムバ（新曲発売）期間、アルバムは何枚買った？",
+                choices: [
+                    { text: "50枚以上（ヨントン応募とトレカコンプが目的）", score: 5 },
+                    { text: "10〜20枚程度（形態別に一通り＋推し狙い）", score: 4 },
+                    { text: "1〜3枚（純粋に音楽とアルバム本体を楽しむ）", score: 2 },
+                    { text: "音源配信（ストリーミング）だけでCDは未購入", score: 1 }
+                ]
+            },
+            {
+                text: "Q2. 海外（韓国やワールドツアー）でのライブ参戦は？",
+                choices: [
+                    { text: "ソウルコンや海外公演へ毎度のように飛ぶ", score: 5 },
+                    { text: "日本公演のドームやアリーナツアーは全通・遠征", score: 4 },
+                    { text: "日本での主要なコンサートやファンミがあれば行く", score: 2 },
+                    { text: "ライブは行かず、自宅でYouTubeや配信を見る派", score: 1 }
+                ]
+            },
+            {
+                text: "Q3. 推しのトレカ（トレーディングカード）の集め方は？",
+                choices: [
+                    { text: "自らも大量買いしつつ、メルカリやSNSで高額レアも即収集", score: 5 },
+                    { text: "自引きできたら嬉しいし、たまにフリマアプリで交換・購入する", score: 4 },
+                    { text: "アルバムに封入されているものをそのまま大事に挟んでおく", score: 2 },
+                    { text: "トレカ文化自体にあまりこだわりや興味がない", score: 1 }
+                ]
+            },
+            {
+                text: "Q4. 日常のSNS（X、Weverse、Instagramなど）での推し活は？",
+                choices: [
+                    { text: "通知をすべてon。推しの動向を最速でキャッチし布教活動もガチ", score: 5 },
+                    { text: "毎日の日課として公式アプリやトレンドをこまめにチェック", score: 4 },
+                    { text: "気が向いた時やタイムラインに流れてきた時だけ見る", score: 2 },
+                    { text: "たまに話題になった時だけニュースや動画を見る", score: 1 }
+                ]
+            }
+        ];
+
+        let currentIdx = 0;
+        let totalScore = 0;
+
+        function loadQuestion() {
+            if (currentIdx >= questions.length) {
+                triggerWhiteoutAnimation();
+                return;
+            }
+            document.getElementById("progress").innerText = `Q${currentIdx + 1} / ${questions.length}`;
+            const q = questions[currentIdx];
+            document.getElementById("question-text").innerText = q.text;
+            const container = document.getElementById("choices-container");
+            container.innerHTML = "";
+
+            q.choices.forEach(choice => {
+                const btn = document.createElement("button");
+                btn.className = "choice-btn";
+                btn.innerText = choice.text;
+                btn.onclick = () => {
+                    totalScore += choice.score;
+                    currentIdx++;
+                    loadQuestion();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function triggerWhiteoutAnimation() {
+            document.getElementById("quiz-screen").style.display = "none";
+            const animScreen = document.getElementById("gacha-animation-screen");
+            animScreen.style.display = "flex";
+
+            setTimeout(() => {
+                animScreen.style.display = "none";
+                showResult();
+            }, 1100);
+        }
+
+        function showResult() {
+            document.getElementById("result-screen").style.display = "block";
+
+            let title = "";
+            let desc = "";
+            let rarityClass = "";
+            let badgeText = "";
+            let imagePath = "";
+            let titleColorClass = "";
+
+            // 4段階ランク（SSS, SR, R, N）の判定
+            if (totalScore >= 18) {
+                title = "【ワールドワイド・マスター狂】";
+                desc = "国境と財布の限界を超越したK-POP界の重鎮。あなたの愛と投資額は事務所の業績を支えるレベルに達しています。";
+                rarityClass = "sss";
+                badgeText = "SSS";
+                imagePath = "img/sss.webp";
+                titleColorClass = "sss-text";
+            } else if (totalScore >= 13) {
+                title = "【カムバ全通ハイパー強火ペン】";
+                desc = "アルバム積立・音源ストリーミング・ライブ遠征を完璧にこなす勝ち組オタク。推しからの認知も確実な領域です。";
+                rarityClass = "sr";
+                badgeText = "SR";
+                imagePath = "img/sr.webp";
+                titleColorClass = "sr-text";
+            } else if (totalScore >= 8) {
+                title = "【エンジョイ・ライトペン】";
+                desc = "マイペースに楽曲やコンテンツを楽しみながら、健全に推し活を満喫しているピースフルなファン層です。";
+                rarityClass = "r";
+                badgeText = "R";
+                imagePath = "img/r.webp";
+                titleColorClass = "r-text";
+            } else {
+                title = "【一般通過・音源リスナー】";
+                desc = "話題の曲をプレイリストで聴いたり、ふと流れてくるパフォーマンス動画を楽しく眺めているルーキーさんです。";
+                rarityClass = "n";
+                badgeText = "N";
+                imagePath = "img/n.webp";
+                titleColorClass = "n-text";
+            }
+
+            const cardFrame = document.getElementById("gacha-card-frame");
+            cardFrame.className = `gacha-card ${rarityClass}`;
+
+            document.getElementById("rarity-badge").innerText = badgeText;
+            document.getElementById("result-image").src = imagePath;
+            
+            const titleEl = document.getElementById("rank-title");
+            titleEl.innerText = title;
+            titleEl.className = `rank-title ${titleColorClass}`;
+
+            document.getElementById("rank-desc").innerText = desc;
+        }
+
+        function shareToX() {
+            const rankTitle = document.getElementById("rank-title").innerText;
+            const text = encodeURIComponent(`私のK-POP推し活診断結果は${rankTitle}でした！\n#KPOP推し活ガチ勢チェッカー`);
+            window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+        }
+
+        function retryQuiz() {
+            currentIdx = 0;
+            totalScore = 0;
+            document.getElementById("result-screen").style.display = "none";
+            document.getElementById("quiz-screen").style.display = "block";
+            loadQuestion();
+        }
+
+        loadQuestion();
+    </script>
+</body>
+</html>
