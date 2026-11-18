@@ -18,6 +18,7 @@
             margin: 0;
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
         body {
             background-color: var(--bg-color);
@@ -41,7 +42,7 @@
             overflow: hidden;
         }
         h1 {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             text-align: center;
             margin-bottom: 24px;
             background: linear-gradient(45deg, var(--accent-pink), var(--accent-cyan));
@@ -80,9 +81,10 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        .choice-btn:hover {
+        .choice-btn:hover, .choice-btn:focus, .choice-btn:active {
             border-color: var(--accent-pink);
             background-color: #30363d;
+            outline: none;
         }
 
         /* --- 洞窟から外へ抜けるホワイトアウト演出画面 --- */
@@ -333,6 +335,11 @@
     </div>
 
     <script>
+        const imagePaths = ["img/sss.webp", "img/sr.webp", "img/r.webp", "img/n.webp"];
+                imagePaths.forEach(path => {
+                const img = new Image();
+                img.src = path;
+        });
         const questions = [
             {
                 text: "Q1. 推しのカムバ（新曲発売）期間、アルバムは何枚買った？",
